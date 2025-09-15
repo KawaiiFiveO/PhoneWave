@@ -2,6 +2,17 @@
 
 import pjsua2 as pj
 
+def get_public_ip():
+    """Fetches the public IP address from an external service."""
+    try:
+        response = requests.get('https://api.ipify.org')
+        response.raise_for_status()
+        print(f"Discovered public IP: {response.text}")
+        return response.text
+    except requests.exceptions.RequestException as e:
+        print(f"Could not get public IP address: {e}")
+        return None
+
 class SipClient:
     def __init__(self, config, dtmf_callback=None, disconnect_callback=None):
         self.config = config
@@ -12,20 +23,20 @@ class SipClient:
         self.current_call = None
 
     def start(self):
+        # First, discover our public IP
+        public_ip = get_public_ip()
+        if not public_ip:
+            raise RuntimeError("Cannot start SIP client without a public IP address.")
+
         self.ep.libCreate()
         
         ep_cfg = pj.EpConfig()
-
-        # 1. Set the log level for diagnostics
         ep_cfg.logConfig.level = 4
         ep_cfg.logConfig.consoleLevel = 4
-
-        # 2. Set the STUN server under uaConfig
-        # Create a StringVector to hold the STUN server addresses
+        
+        # STUN is still useful for NAT type detection, so we keep it
         stun_servers = pj.StringVector()
         stun_servers.append("stun.l.google.com:19302")
-
-        # Assign the StringVector to the stunServer property
         ep_cfg.uaConfig.stunServer = stun_servers
 
         self.ep.libInit(ep_cfg)
@@ -33,6 +44,10 @@ class SipClient:
         # Create SIP transport
         transport_cfg = pj.TransportConfig()
         transport_cfg.port = 5060
+
+        # Set the discovered public address
+        transport_cfg.public_addr = public_ip
+
         self.ep.transportCreate(pj.PJSIP_TRANSPORT_UDP, transport_cfg)
 
         self.ep.libStart()
