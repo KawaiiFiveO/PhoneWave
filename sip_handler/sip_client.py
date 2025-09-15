@@ -60,6 +60,13 @@ class SipClient:
         acc_cfg.regConfig.registrarUri = f"sip:{self.config.SIP_DOMAIN}"
         cred = pj.AuthCredInfo("digest", "*", self.config.SIP_USER, 0, self.config.SIP_PASSWORD)
         acc_cfg.sipConfig.authCreds.append(cred)
+        # Create a specific NAT configuration for this account
+        acc_nat_cfg = pj.AccountNatConfig()
+        # Force the address used in the 'Via' header
+        acc_nat_cfg.via_addr = public_ip
+
+        # Assign this NAT configuration to the account configuration
+        acc_cfg.natConfig = acc_nat_cfg
 
         self.acc = self._create_account(acc_cfg)
         print(f"*** Account {self.acc.getInfo().uri} registered ***")
