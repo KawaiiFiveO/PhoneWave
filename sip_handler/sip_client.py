@@ -21,7 +21,12 @@ class SipClient:
         ep_cfg.logConfig.consoleLevel = 4
 
         # 2. Set the STUN server under uaConfig
-        ep_cfg.uaConfig.stunServer = "stun.l.google.com:19302"
+        # Create a StringVector to hold the STUN server addresses
+        stun_servers = pj.StringVector()
+        stun_servers.append("stun.l.google.com:19302")
+
+        # Assign the StringVector to the stunServer property
+        ep_cfg.uaConfig.stunServer = stun_servers
 
         self.ep.libInit(ep_cfg)
 
