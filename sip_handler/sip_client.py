@@ -1,6 +1,7 @@
 # sip-call-handler/sip_handler/sip_client.py
 
 import pjsua2 as pj
+import requests
 
 def get_public_ip():
     """Fetches the public IP address from an external service."""
