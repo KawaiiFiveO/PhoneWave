@@ -1,0 +1,13 @@
+# sip-call-handler/config.py
+
+# SIP Account Configuration
+SIP_DOMAIN = "your_sip_domain"
+SIP_USER = "your_username"
+SIP_PASSWORD = "your_password"
+
+# Audio File Configuration
+WAV_FILE = "audio/welcome.wav"
+
+# Smart Plug Configuration
+SMART_PLUG_IP = "192.168.1.100"  # IMPORTANT: Change to your plug's IP
+SMART_PLUG_BASE_URL = f"http://{SMART_PLUG_IP}/cm"
