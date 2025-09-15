@@ -13,9 +13,15 @@ class SipClient:
 
     def start(self):
         self.ep.libCreate()
+        
         ep_cfg = pj.EpConfig()
-        # Add STUN server configuration
-        ep_cfg.natConfig.stunServer = "stun.l.google.com:19302"
+
+        # 1. Set the log level for diagnostics
+        ep_cfg.logConfig.level = 4
+        ep_cfg.logConfig.consoleLevel = 4
+
+        # 2. Set the STUN server under uaConfig
+        ep_cfg.uaConfig.stunServer = "stun.l.google.com:19302"
 
         self.ep.libInit(ep_cfg)
 
@@ -25,17 +31,15 @@ class SipClient:
         self.ep.transportCreate(pj.PJSIP_TRANSPORT_UDP, transport_cfg)
 
         self.ep.libStart()
-        self.ep.libInit(ep_cfg)
-        transport_cfg = pj.TransportConfig()
-        transport_cfg.port = 5060
-        self.ep.transportCreate(pj.PJSIP_TRANSPORT_UDP, transport_cfg)
-        self.ep.libStart()
         print("*** PJSUA2 started ***")
+
+        # Create and register account
         acc_cfg = pj.AccountConfig()
         acc_cfg.idUri = f"sip:{self.config.SIP_USER}@{self.config.SIP_DOMAIN}"
         acc_cfg.regConfig.registrarUri = f"sip:{self.config.SIP_DOMAIN}"
         cred = pj.AuthCredInfo("digest", "*", self.config.SIP_USER, 0, self.config.SIP_PASSWORD)
         acc_cfg.sipConfig.authCreds.append(cred)
+
         self.acc = self._create_account(acc_cfg)
         print(f"*** Account {self.acc.getInfo().uri} registered ***")
 
