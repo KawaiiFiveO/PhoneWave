@@ -12,9 +12,19 @@ class SipClient:
         self.current_call = None
 
     def start(self):
-        # ... (rest of the start method is unchanged) ...
         self.ep.libCreate()
         ep_cfg = pj.EpConfig()
+        # Add STUN server configuration
+        ep_cfg.natConfig.stunServer = "stun.l.google.com:19302"
+
+        self.ep.libInit(ep_cfg)
+
+        # Create SIP transport
+        transport_cfg = pj.TransportConfig()
+        transport_cfg.port = 5060
+        self.ep.transportCreate(pj.PJSIP_TRANSPORT_UDP, transport_cfg)
+
+        self.ep.libStart()
         self.ep.libInit(ep_cfg)
         transport_cfg = pj.TransportConfig()
         transport_cfg.port = 5060
