@@ -89,6 +89,7 @@ class Account(pj.Account):
         self.client = client
 
     def onIncomingCall(self, prm):
+        print("!!! onIncomingCall HAS BEEN TRIGGERED !!!")
         remote_uri = prm.remoteUri
         print(f"*** Incoming call from {remote_uri} ***")
         call = Call(self, self.client, call_id=prm.callId)
@@ -127,7 +128,6 @@ class Call(pj.Call):
                 self.client.disconnect_callback()
 
     def onCallMediaState(self, prm):
-        # ... (this method is unchanged) ...
         ci = self.getInfo()
         print("*** Call media state changed ***")
         for mi in ci.media:
