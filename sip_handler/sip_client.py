@@ -34,6 +34,7 @@ class SipClient:
         ep_cfg = pj.EpConfig()
         ep_cfg.logConfig.level = 4
         ep_cfg.logConfig.consoleLevel = 4
+        ep_cfg.uaConfig.maxCalls = 1
         
         # STUN is still useful for NAT type detection, so we keep it
         stun_servers = pj.StringVector()
