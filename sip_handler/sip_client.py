@@ -35,6 +35,7 @@ class SipClient:
         ep_cfg.logConfig.level = 4
         ep_cfg.logConfig.consoleLevel = 4
         ep_cfg.uaConfig.maxCalls = 1
+        ep_cfg.uaConfig.userAgent = "PhoneWave SIP Client v1.0"
         
         # STUN is still useful for NAT type detection, so we keep it
         stun_servers = pj.StringVector()
