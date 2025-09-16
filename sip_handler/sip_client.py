@@ -46,7 +46,7 @@ class SipClient:
 
         # Create SIP transport
         transport_cfg = pj.TransportConfig()
-        transport_cfg.port = 5060
+        transport_cfg.port = 5080
 
         # Set the discovered public address
         transport_cfg.public_addr = public_ip
