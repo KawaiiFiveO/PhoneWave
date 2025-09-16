@@ -95,12 +95,22 @@ class Account(pj.Account):
     def onIncomingCall(self, prm):
         print("!!! onIncomingCall HAS BEEN TRIGGERED !!!")
         
-        remote_info = prm.remoteInfo
-        print(f"*** Incoming call from {remote_info} ***")
-
+        # 1. Create the Call object from the callId provided in the prm object.
         call = Call(self, self.client, call_id=prm.callId)
         self.client.current_call = call
         
+        # 2. Get the call's information FROM the call object.
+        try:
+            ci = call.getInfo()
+            remote_info = ci.remoteUri
+            print(f"*** Incoming call from {remote_info} ***")
+        except pj.Error as e:
+            print(f"Error getting call info: {e}")
+            # Hang up if we can't get info
+            call.hangup(pj.CallOpParam(500))
+            return
+
+        # 3. Answer the call.
         call_prm = pj.CallOpParam()
         call_prm.statusCode = 200
         call.answer(call_prm)
