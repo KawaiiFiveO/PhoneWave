@@ -35,42 +35,42 @@ class SipClient:
         ep_cfg.logConfig.level = 4
         ep_cfg.logConfig.consoleLevel = 4
         ep_cfg.uaConfig.maxCalls = 1
-        ep_cfg.uaConfig.userAgent = "PhoneWave SIP Client v1.0"
-        
-        # STUN is still useful for NAT type detection, so we keep it
-        stun_servers = pj.StringVector()
-        stun_servers.append("stun.l.google.com:19302")
-        ep_cfg.uaConfig.stunServer = stun_servers
+        ep_cfg.uaConfig.userAgent = "Python SIP Client v1.0"
 
         self.ep.libInit(ep_cfg)
 
-        # Create SIP transport
-        transport_cfg = pj.TransportConfig()
-        transport_cfg.port = 5080
-
-        # Set the discovered public address
-        transport_cfg.public_addr = public_ip
-
-        self.ep.transportCreate(pj.PJSIP_TRANSPORT_UDP, transport_cfg)
+        # --- MODIFICATION 1: CREATE A TCP TRANSPORT ---
+        # We will listen on TCP port 5060 (or another port like 5061 if you prefer)
+        try:
+            transport_cfg = pj.TransportConfig()
+            transport_cfg.port = 5060
+            self.ep.transportCreate(pj.PJSIP_TRANSPORT_TCP, transport_cfg)
+        except pj.Error as e:
+            print(f"Error creating TCP transport: {e}")
+            # Fallback to UDP if TCP fails for some reason
+            self.ep.transportCreate(pj.PJSIP_TRANSPORT_UDP, transport_cfg)
 
         self.ep.libStart()
-        print("*** PJSUA2 started ***")
+        print("*** PJSUA2 started with TCP transport ***")
 
         # Create and register account
         acc_cfg = pj.AccountConfig()
         acc_cfg.idUri = f"sip:{self.config.SIP_USER}@{self.config.SIP_DOMAIN}"
         
-        acc_cfg.regConfig.registrarUri = f"sip:{self.config.SIP_DOMAIN}"
+        # --- MODIFICATION 2: SPECIFY TCP IN THE REGISTRAR URI ---
+        acc_cfg.regConfig.registrarUri = f"sip:{self.config.SIP_DOMAIN};transport=tcp"
+        
+        # --- MODIFICATION 3: SPECIFY TCP IN THE PROXY ---
+        # This ensures all subsequent messages also use TCP
+        proxy_vector = pj.StringVector()
+        proxy_vector.append(f"sip:{self.config.SIP_DOMAIN};lr;transport=tcp")
+        acc_cfg.sipConfig.proxies = proxy_vector
+
         cred = pj.AuthCredInfo("digest", "*", self.config.SIP_USER, 0, self.config.SIP_PASSWORD)
         acc_cfg.sipConfig.authCreds.append(cred)
 
-        outbound_proxy_vector = pj.StringVector()
-        outbound_proxy_vector.append(f"sip:{self.config.SIP_DOMAIN};lr")
-        acc_cfg.sipConfig.outboundProxies = outbound_proxy_vector
-
-        acc_nat_cfg = pj.AccountNatConfig()
-        acc_nat_cfg.via_addr = public_ip
-        acc_cfg.natConfig = acc_nat_cfg
+        # STUN and explicit NAT are not typically needed for TCP as the connection is persistent
+        # We can simplify by removing them for this test.
 
         self.acc = self._create_account(acc_cfg)
         print(f"*** Account {acc_cfg.idUri} registered ***")
