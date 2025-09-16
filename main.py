@@ -59,16 +59,13 @@ def handle_dtmf(duration_str):
         oled.display_message("Invalid Time", duration_str)
         return
 
-    # Clean up any previous timers before starting a new one
     cleanup_timer_and_threads()
 
     print(f"Turning plug ON for {duration_seconds} seconds.")
     if smart_plug.turn_on():
-        # Start the timer to turn the plug off later
         plug_timer = threading.Timer(duration_seconds, plug_off_task)
         plug_timer.start()
 
-        # Start the thread to update the display
         stop_display_event.clear()
         display_thread = threading.Thread(target=update_display_countdown, args=(duration_seconds,))
         display_thread.start()

@@ -41,8 +41,8 @@ class OLEDController:
         
         with canvas(self.device) as draw:
             draw.text((0, 0), "PLUG IS ON", font=self.font_small, fill="white")
-            # Center the large time string
-            text_width, _ = draw.textsize(time_str, font=self.font_large)
+            bbox = draw.textbbox((0, 0), time_str, font=self.font_large)
+            text_width = bbox[2] - bbox[0]
             x_pos = (self.device.width - text_width) / 2
             draw.text((x_pos, 8), time_str, font=self.font_large, fill="white")
 

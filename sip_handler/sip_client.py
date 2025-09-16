@@ -125,8 +125,16 @@ class Call(pj.Call):
     def onDtmfDigit(self, prm):
         digit = prm.digit
         print(f"*** DTMF digit received: {digit} ***")
-        if self.client.dtmf_callback:
-            self.client.dtmf_callback(digit)
+
+        if digit == '#':
+            # If # is pressed, send the whole buffer to the callback
+            if self.client.dtmf_callback and self.dtmf_buffer:
+                self.client.dtmf_callback(self.dtmf_buffer)
+            # Always reset the buffer after # is pressed
+            self.dtmf_buffer = ""
+        else:
+            # If any other digit is pressed, add it to the buffer
+            self.dtmf_buffer += digit
 
     def onCallState(self, prm):
         ci = self.getInfo()
