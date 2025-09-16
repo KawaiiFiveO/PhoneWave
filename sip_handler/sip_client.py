@@ -57,20 +57,26 @@ class SipClient:
 
         # Create and register account
         acc_cfg = pj.AccountConfig()
-        acc_cfg.idUri = f"sip:{self.config.SIP_USER}"
+        acc_cfg.idUri = f"sip:{self.config.SIP_USER}@{self.config.SIP_DOMAIN}"
+        
         acc_cfg.regConfig.registrarUri = f"sip:{self.config.SIP_DOMAIN}"
         cred = pj.AuthCredInfo("digest", "*", self.config.SIP_USER, 0, self.config.SIP_PASSWORD)
         acc_cfg.sipConfig.authCreds.append(cred)
-        # Create a specific NAT configuration for this account
-        acc_nat_cfg = pj.AccountNatConfig()
-        # Force the address used in the 'Via' header
-        acc_nat_cfg.via_addr = public_ip
 
-        # Assign this NAT configuration to the account configuration
+        # 2. EXPLICITLY SET THE PROXY SERVER
+        # This tells PJSIP how to route requests for this account and helps it
+        # match incoming requests from that proxy.
+        proxy_vector = pj.StringVector()
+        # The ';lr' parameter (loose routing) is important.
+        proxy_vector.append(f"sip:{self.config.SIP_DOMAIN};lr")
+        acc_cfg.sipConfig.proxies = proxy_vector
+
+        acc_nat_cfg = pj.AccountNatConfig()
+        acc_nat_cfg.via_addr = public_ip
         acc_cfg.natConfig = acc_nat_cfg
 
         self.acc = self._create_account(acc_cfg)
-        print(f"*** Account {self.acc.getInfo().uri} registered ***")
+        print(f"*** Account {acc_cfg.idUri} registered ***")
 
 
     def stop(self):
