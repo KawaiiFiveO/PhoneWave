@@ -4,7 +4,7 @@ SIP-based Smart Plug Controller for Raspberry Pi. Spiritual successor to [SIP-Pi
 
 Can be modified to support other types of smart plugs or displays.
 
-Currently in development. Expect breaking changes.
+**Currently in development.** Expect breaking changes.
 
 ### Requirements
 
@@ -43,6 +43,7 @@ cp config.example config.py
 nano config.py
 ```
 You can also change `audio/welcome.wav` to any message of your choice.
+
 7. Install requirements.
 ```
 pip install -r requirements.txt
