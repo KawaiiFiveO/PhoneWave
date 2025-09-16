@@ -74,11 +74,13 @@ def handle_dtmf(duration_str):
 
 def on_call_disconnect():
     """Callback for when the SIP call is disconnected."""
-    print("Call disconnected. Cleaning up active timers.")
-    cleanup_timer_and_threads()
-    oled.display_message("Call Ended", "Plug is OFF")
-    time.sleep(5) # Display message for a bit
-    oled.display_message("System Ready", "Waiting for call...")
+    # Check if a timer is currently active and running.
+    # The .is_alive() method checks if the timer is still waiting to execute.
+    if plug_timer and plug_timer.is_alive():
+        print("Call disconnected. Timer is active and will continue to run.")
+    else:
+        print("Call disconnected. No active timer.")
+        oled.display_message("System Ready", "Waiting for call...")
 
 def main():
     """Main application function."""
