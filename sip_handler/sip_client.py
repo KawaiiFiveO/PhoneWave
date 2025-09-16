@@ -24,7 +24,6 @@ class SipClient:
         self.current_call = None
 
     def start(self):
-        # First, discover our public IP
         public_ip = get_public_ip()
         if not public_ip:
             raise RuntimeError("Cannot start SIP client without a public IP address.")
@@ -35,46 +34,48 @@ class SipClient:
         ep_cfg.logConfig.level = 4
         ep_cfg.logConfig.consoleLevel = 4
         ep_cfg.uaConfig.maxCalls = 1
-        ep_cfg.uaConfig.userAgent = "Python SIP Client v1.0"
+        ep_cfg.uaConfig.userAgent = "PhoneWave SIP Client v1.0"
+
+        media_cfg = pj.MediaConfig()
+        media_cfg.enableVad = False
+        ep_cfg.mediaConfig = media_cfg
+        
+        stun_servers = pj.StringVector()
+        stun_servers.append("stun.l.google.com:19302")
+        ep_cfg.uaConfig.stunServer = stun_servers
 
         self.ep.libInit(ep_cfg)
 
-        # --- MODIFICATION 1: CREATE A TCP TRANSPORT ---
-        # We will listen on TCP port 5060 (or another port like 5061 if you prefer)
-        try:
-            transport_cfg = pj.TransportConfig()
-            transport_cfg.port = 5060
-            self.ep.transportCreate(pj.PJSIP_TRANSPORT_TCP, transport_cfg)
-        except pj.Error as e:
-            print(f"Error creating TCP transport: {e}")
-            # Fallback to UDP if TCP fails for some reason
-            self.ep.transportCreate(pj.PJSIP_TRANSPORT_UDP, transport_cfg)
+        # 1. Create a UDP transport on the standard port
+        transport_cfg = pj.TransportConfig()
+        transport_cfg.port = 5060
+        # 2. Advertise our public IP in SIP messages
+        transport_cfg.public_addr = public_ip
+        self.ep.transportCreate(pj.PJSIP_TRANSPORT_UDP, transport_cfg)
 
         self.ep.libStart()
-        print("*** PJSUA2 started with TCP transport ***")
+        print("*** PJSUA2 started with UDP transport ***")
 
         # Create and register account
         acc_cfg = pj.AccountConfig()
         acc_cfg.idUri = f"sip:{self.config.SIP_USER}@{self.config.SIP_DOMAIN}"
+        acc_cfg.regConfig.registrarUri = f"sip:{self.config.SIP_DOMAIN}"
         
-        # --- MODIFICATION 2: SPECIFY TCP IN THE REGISTRAR URI ---
-        acc_cfg.regConfig.registrarUri = f"sip:{self.config.SIP_DOMAIN};transport=tcp"
-        
-        # --- MODIFICATION 3: SPECIFY TCP IN THE PROXY ---
-        # This ensures all subsequent messages also use TCP
-        proxy_vector = pj.StringVector()
-        proxy_vector.append(f"sip:{self.config.SIP_DOMAIN};lr;transport=tcp")
-        acc_cfg.sipConfig.proxies = proxy_vector
-
         cred = pj.AuthCredInfo("digest", "*", self.config.SIP_USER, 0, self.config.SIP_PASSWORD)
         acc_cfg.sipConfig.authCreds.append(cred)
 
-        # STUN and explicit NAT are not typically needed for TCP as the connection is persistent
-        # We can simplify by removing them for this test.
+        # 3. Set the outbound proxy for robust call matching
+        outbound_proxy_vector = pj.StringVector()
+        outbound_proxy_vector.append(f"sip:{self.config.SIP_DOMAIN};lr")
+        acc_cfg.sipConfig.outboundProxies = outbound_proxy_vector
+
+        # 4. Use AccountNatConfig to force the correct 'Via' header during authentication
+        acc_nat_cfg = pj.AccountNatConfig()
+        acc_nat_cfg.via_addr = public_ip
+        acc_cfg.natConfig = acc_nat_cfg
 
         self.acc = self._create_account(acc_cfg)
         print(f"*** Account {acc_cfg.idUri} registered ***")
-
 
     def stop(self):
         if self.ep:
@@ -93,8 +94,10 @@ class Account(pj.Account):
 
     def onIncomingCall(self, prm):
         print("!!! onIncomingCall HAS BEEN TRIGGERED !!!")
-        remote_uri = prm.remoteUri
-        print(f"*** Incoming call from {remote_uri} ***")
+        
+        remote_info = prm.remoteInfo
+        print(f"*** Incoming call from {remote_info} ***")
+
         call = Call(self, self.client, call_id=prm.callId)
         self.client.current_call = call
         
@@ -112,13 +115,8 @@ class Call(pj.Call):
     def onDtmfDigit(self, prm):
         digit = prm.digit
         print(f"*** DTMF digit received: {digit} ***")
-
-        if digit == '#':
-            if self.client.dtmf_callback and self.dtmf_buffer:
-                self.client.dtmf_callback(self.dtmf_buffer)
-            self.dtmf_buffer = "" # Reset buffer
-        else:
-            self.dtmf_buffer += digit
+        if self.client.dtmf_callback:
+            self.client.dtmf_callback(digit)
 
     def onCallState(self, prm):
         ci = self.getInfo()
