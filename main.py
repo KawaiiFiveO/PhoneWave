@@ -76,8 +76,6 @@ def on_call_disconnect():
     """Callback for when the SIP call is disconnected."""
     print("Call disconnected. Cleaning up active timers.")
     cleanup_timer_and_threads()
-    # If the plug was on, turn it off as a safety measure
-    smart_plug.turn_off()
     oled.display_message("Call Ended", "Plug is OFF")
     time.sleep(5) # Display message for a bit
     oled.display_message("System Ready", "Waiting for call...")
