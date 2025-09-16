@@ -57,7 +57,7 @@ class SipClient:
 
         # Create and register account
         acc_cfg = pj.AccountConfig()
-        acc_cfg.idUri = f"sip:{self.config.SIP_USER}@{self.config.SIP_DOMAIN}"
+        acc_cfg.idUri = f"sip:{self.config.SIP_USER}"
         acc_cfg.regConfig.registrarUri = f"sip:{self.config.SIP_DOMAIN}"
         cred = pj.AuthCredInfo("digest", "*", self.config.SIP_USER, 0, self.config.SIP_PASSWORD)
         acc_cfg.sipConfig.authCreds.append(cred)
