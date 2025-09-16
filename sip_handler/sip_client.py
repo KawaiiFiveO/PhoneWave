@@ -31,8 +31,6 @@ class SipClient:
         self.ep.libCreate()
         
         ep_cfg = pj.EpConfig()
-        ep_cfg.logConfig.level = 4
-        ep_cfg.logConfig.consoleLevel = 4
         ep_cfg.uaConfig.maxCalls = 1
         ep_cfg.uaConfig.userAgent = "PhoneWave SIP Client v1.0"
 
