@@ -63,13 +63,9 @@ class SipClient:
         cred = pj.AuthCredInfo("digest", "*", self.config.SIP_USER, 0, self.config.SIP_PASSWORD)
         acc_cfg.sipConfig.authCreds.append(cred)
 
-        # 2. EXPLICITLY SET THE PROXY SERVER
-        # This tells PJSIP how to route requests for this account and helps it
-        # match incoming requests from that proxy.
-        proxy_vector = pj.StringVector()
-        # The ';lr' parameter (loose routing) is important.
-        proxy_vector.append(f"sip:{self.config.SIP_DOMAIN};lr")
-        acc_cfg.sipConfig.proxies = proxy_vector
+        outbound_proxy_vector = pj.StringVector()
+        outbound_proxy_vector.append(f"sip:{self.config.SIP_DOMAIN};lr")
+        acc_cfg.sipConfig.outboundProxies = outbound_proxy_vector
 
         acc_nat_cfg = pj.AccountNatConfig()
         acc_nat_cfg.via_addr = public_ip
